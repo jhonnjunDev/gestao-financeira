@@ -33,7 +33,7 @@ export default function CategoriesClient({ accountId }: { accountId: string }) {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/categories?accountId=${accountId}`);
+      const res = await fetch(`/gestao/api/categories?accountId=${accountId}`);
       const json = await res.json();
       if (json.success) setCategories(json.data);
     } finally {
@@ -84,7 +84,7 @@ export default function CategoriesClient({ accountId }: { accountId: string }) {
   async function remove() {
     if (!confirmDelete) return;
     try {
-      await fetch(`/api/categories/${confirmDelete.id}`, { method: "DELETE" });
+      await fetch(`/gestao/api/categories/${confirmDelete.id}`, { method: "DELETE" });
       setConfirmDelete(null);
       load();
     } catch {

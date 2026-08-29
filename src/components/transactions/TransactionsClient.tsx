@@ -99,7 +99,7 @@ export default function TransactionsClient({ accountId }: { accountId: string })
       if (filters.startDate) params.set("startDate", filters.startDate);
       if (filters.endDate) params.set("endDate", filters.endDate);
 
-      const res = await fetch(`/api/transactions?${params}`);
+      const res = await fetch(`/gestao/api/transactions?${params}`);
       const json = await res.json();
       if (json.success) {
         setTransactions(json.data.transactions);
@@ -112,9 +112,9 @@ export default function TransactionsClient({ accountId }: { accountId: string })
 
   const loadSelects = useCallback(async () => {
     const [catRes, supRes, ccRes] = await Promise.all([
-      fetch(`/api/categories?accountId=${accountId}`),
-      fetch(`/api/suppliers?accountId=${accountId}`),
-      fetch(`/api/cost-centers?accountId=${accountId}`),
+      fetch(`/gestao/api/categories?accountId=${accountId}`),
+      fetch(`/gestao/api/suppliers?accountId=${accountId}`),
+      fetch(`/gestao/api/cost-centers?accountId=${accountId}`),
     ]);
     const cat = await catRes.json();
     const sup = await supRes.json();
@@ -232,7 +232,7 @@ export default function TransactionsClient({ accountId }: { accountId: string })
   async function deleteTransaction() {
     if (!confirmDelete) return;
     try {
-      await fetch(`/api/transactions/${confirmDelete.id}`, { method: "DELETE" });
+      await fetch(`/gestao/api/transactions/${confirmDelete.id}`, { method: "DELETE" });
       setConfirmDelete(null);
       loadTransactions();
     } catch {

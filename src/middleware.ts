@@ -27,50 +27,59 @@ const protectedRoutes = [
   "/api",
 ];
 
+const BASE_PATH = "/gestao";
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Remove o basePath para avaliar as rotas internas
+  const p = pathname.startsWith(BASE_PATH)
+    ? pathname.slice(BASE_PATH.length) || "/"
+    : pathname;
+
   // Login e register são públicos (incluindo as APIs de autenticação)
   if (
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname.startsWith("/api/auth/")
+    p === "/login" ||
+    p === "/register" ||
+    p.startsWith("/api/auth/")
   ) {
     return NextResponse.next();
   }
 
   // Verificar se é rota protegida
   const isProtected = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
+    p.startsWith(route)
   );
 
-  if (!isProtected && pathname !== "/") {
+  if (!isProtected && p !== "/") {
     return NextResponse.next();
   }
 
   const token = request.cookies.get("session")?.value;
 
   if (!token) {
-    if (pathname.startsWith("/api")) {
+    if (p.startsWith("/api")) {
       return NextResponse.json(
         { success: false, error: "Não autorizado" },
         { status: 401 }
       );
     }
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL(`${BASE_PATH}/login`, request.url));
   }
 
   try {
     await jwtVerify(token, SECRET);
     return NextResponse.next();
   } catch {
-    if (pathname.startsWith("/api")) {
+    if (p.startsWith("/api")) {
       return NextResponse.json(
         { success: false, error: "Sessão expirada" },
         { status: 401 }
       );
     }
-    const response = NextResponse.redirect(new URL("/login", request.url));
+    const response = NextResponse.redirect(
+      new URL(`${BASE_PATH}/login`, request.url)
+    );
     response.cookies.set("session", "", { maxAge: 0, path: "/" });
     return response;
   }

@@ -93,7 +93,7 @@ export default function DashboardClient({ accountId, accountName, initialData }:
   async function loadData(p: string) {
     setLoading(true);
     try {
-      const res = await fetch(`/api/reports?accountId=${accountId}&period=${p}`);
+      const res = await fetch(`/gestao/api/reports?accountId=${accountId}&period=${p}`);
       const json = await res.json();
       if (json.success) setData(json.data);
     } finally {
@@ -103,9 +103,9 @@ export default function DashboardClient({ accountId, accountName, initialData }:
 
   async function loadExtras() {
     const [accRes, catRes, upRes] = await Promise.all([
-      fetch("/api/accounts"),
-      fetch(`/api/categories?accountId=${accountId}`),
-      fetch(`/api/transactions?accountId=${accountId}&status=PENDING&limit=10`),
+      fetch("/gestao/api/accounts"),
+      fetch(`/gestao/api/categories?accountId=${accountId}`),
+      fetch(`/gestao/api/transactions?accountId=${accountId}&status=PENDING&limit=10`),
     ]);
     const acc = await accRes.json();
     const cat = await catRes.json();
@@ -150,7 +150,7 @@ export default function DashboardClient({ accountId, accountName, initialData }:
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/transactions", {
+      const res = await fetch("/gestao/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -185,7 +185,7 @@ export default function DashboardClient({ accountId, accountName, initialData }:
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/transfers", {
+      const res = await fetch("/gestao/api/transfers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transferForm),

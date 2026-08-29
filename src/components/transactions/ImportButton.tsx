@@ -38,7 +38,7 @@ export function ImportButton({ accountId }: { accountId: string }) {
       const formData = new FormData();
       formData.append("accountId", accountId);
       formData.append("file", file);
-      const res = await fetch("/api/import", { method: "POST", body: formData });
+      const res = await fetch("/gestao/api/import", { method: "POST", body: formData });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Erro na importação");
       setResult(json.data);

@@ -14,7 +14,7 @@ export function MarkAsPaidButton({ transactionId, status }: { transactionId: str
   async function markPaid() {
     setLoading(true);
     try {
-      await fetch(`/api/transactions/${transactionId}`, {
+      await fetch(`/gestao/api/transactions/${transactionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "PAID", paymentDate: new Date().toISOString() }),

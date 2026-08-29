@@ -39,8 +39,8 @@ export default function TransfersClient({ accountId }: { accountId: string }) {
     setLoading(true);
     try {
       const [tRes, aRes] = await Promise.all([
-        fetch(`/api/transfers?accountId=${accountId}`),
-        fetch("/api/accounts"),
+        fetch(`/gestao/api/transfers?accountId=${accountId}`),
+        fetch("/gestao/api/accounts"),
       ]);
       const t = await tRes.json();
       const a = await aRes.json();
@@ -65,7 +65,7 @@ export default function TransfersClient({ accountId }: { accountId: string }) {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/transfers", {
+      const res = await fetch("/gestao/api/transfers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

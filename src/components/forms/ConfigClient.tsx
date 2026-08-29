@@ -25,7 +25,7 @@ export default function ConfigClient({ accountId }: { accountId: string }) {
   const [error, setError] = useState("");
 
   async function load() {
-    const [aRes, uRes] = await Promise.all([fetch("/api/accounts"), fetch("/api/settings/users")]);
+    const [aRes, uRes] = await Promise.all([fetch("/gestao/api/accounts"), fetch("/gestao/api/settings/users")]);
     const a = await aRes.json();
     const u = await uRes.json();
     if (a.success) setAccounts(a.data);
@@ -48,7 +48,7 @@ export default function ConfigClient({ accountId }: { accountId: string }) {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/accounts/${editing.id}`, {
+      const res = await fetch(`/gestao/api/accounts/${editing.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -68,7 +68,7 @@ export default function ConfigClient({ accountId }: { accountId: string }) {
   async function archiveAccount() {
     if (!confirmArchive) return;
     try {
-      await fetch(`/api/accounts/${confirmArchive.id}`, { method: "DELETE" });
+      await fetch(`/gestao/api/accounts/${confirmArchive.id}`, { method: "DELETE" });
       setConfirmArchive(null);
       load();
     } catch {
@@ -84,7 +84,7 @@ export default function ConfigClient({ accountId }: { accountId: string }) {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/settings/users", {
+      const res = await fetch("/gestao/api/settings/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userForm),
@@ -213,7 +213,7 @@ export default function ConfigClient({ accountId }: { accountId: string }) {
             <p className="text-sm text-gray-500 mb-4">
               Faça o download de um arquivo SQLite com todos os dados do sistema para restaurar em outro ambiente.
             </p>
-            <a href="/api/backup" className="btn-primary">
+            <a href="/gestao/api/backup" className="btn-primary">
               Baixar backup (.db)
             </a>
           </Card>

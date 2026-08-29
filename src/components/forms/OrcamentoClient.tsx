@@ -46,7 +46,7 @@ export default function OrcamentoClient({ accountId }: { accountId: string }) {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/budgets?accountId=${accountId}&year=${year}&month=${month}`);
+      const res = await fetch(`/gestao/api/budgets?accountId=${accountId}&year=${year}&month=${month}`);
       const json = await res.json();
       if (json.success) setBudgets(json.data);
     } finally {
@@ -56,8 +56,8 @@ export default function OrcamentoClient({ accountId }: { accountId: string }) {
 
   async function loadSelects() {
     const [catRes, ccRes] = await Promise.all([
-      fetch(`/api/categories?accountId=${accountId}`),
-      fetch(`/api/cost-centers?accountId=${accountId}`),
+      fetch(`/gestao/api/categories?accountId=${accountId}`),
+      fetch(`/gestao/api/cost-centers?accountId=${accountId}`),
     ]);
     const cat = await catRes.json();
     const cc = await ccRes.json();
@@ -72,7 +72,7 @@ export default function OrcamentoClient({ accountId }: { accountId: string }) {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/budgets", {
+      const res = await fetch("/gestao/api/budgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -101,7 +101,7 @@ export default function OrcamentoClient({ accountId }: { accountId: string }) {
   async function remove() {
     if (!confirmDelete) return;
     try {
-      await fetch(`/api/budgets/${confirmDelete.id}`, { method: "DELETE" });
+      await fetch(`/gestao/api/budgets/${confirmDelete.id}`, { method: "DELETE" });
       setConfirmDelete(null);
       load();
     } catch {

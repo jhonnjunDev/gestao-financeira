@@ -38,7 +38,7 @@ export default function SuppliersClient({ accountId }: { accountId: string }) {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/suppliers?accountId=${accountId}${search ? `&search=${encodeURIComponent(search)}` : ""}`);
+      const res = await fetch(`/gestao/api/suppliers?accountId=${accountId}${search ? `&search=${encodeURIComponent(search)}` : ""}`);
       const json = await res.json();
       if (json.success) setSuppliers(json.data);
     } finally {
@@ -90,7 +90,7 @@ export default function SuppliersClient({ accountId }: { accountId: string }) {
   async function remove() {
     if (!confirmDelete) return;
     try {
-      await fetch(`/api/suppliers/${confirmDelete.id}`, { method: "DELETE" });
+      await fetch(`/gestao/api/suppliers/${confirmDelete.id}`, { method: "DELETE" });
       setConfirmDelete(null);
       load();
     } catch {

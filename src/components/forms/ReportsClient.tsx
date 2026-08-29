@@ -48,7 +48,7 @@ export default function ReportsClient({ accountId, accountName }: { accountId: s
         else if (period === "semester") start = new Date(now.getFullYear(), Math.floor(now.getMonth() / 6) * 6, 1).toISOString().slice(0, 10);
         else start = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
       }
-      const res = await fetch(`/api/reports/detail?accountId=${accountId}&startDate=${start}&endDate=${end}`);
+      const res = await fetch(`/gestao/api/reports/detail?accountId=${accountId}&startDate=${start}&endDate=${end}`);
       const json = await res.json();
       if (json.success) setData(json.data);
     } finally {

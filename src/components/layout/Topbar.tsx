@@ -72,7 +72,7 @@ export function Topbar({ accounts, currentAccountId, userName, userRole }: {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/accounts", {
+      const res = await fetch("/gestao/api/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,7 +97,7 @@ export function Topbar({ accounts, currentAccountId, userName, userRole }: {
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/accounts/${editing.id}`, {
+      const res = await fetch(`/gestao/api/accounts/${editing.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -212,7 +212,7 @@ export function Topbar({ accounts, currentAccountId, userName, userRole }: {
         </div>
       </div>
 
-      <a href="/api/auth/logout" className="btn-ghost p-2" title="Sair">
+      <a href="/gestao/api/auth/logout" className="btn-ghost p-2" title="Sair">
         <Power className="w-4 h-4" />
       </a>
 

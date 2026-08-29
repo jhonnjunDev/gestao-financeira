@@ -33,7 +33,7 @@ export default function ConsolidatedClient({ accountId }: { accountId: string })
   const [loading, setLoading] = useState(false);
 
   async function loadAccounts() {
-    const res = await fetch("/api/accounts");
+    const res = await fetch("/gestao/api/accounts");
     const json = await res.json();
     if (json.success) setAccounts(json.data);
   }
@@ -42,7 +42,7 @@ export default function ConsolidatedClient({ accountId }: { accountId: string })
     if (selected.length === 0) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/consolidated?accountIds=${selected.join(",")}`);
+      const res = await fetch(`/gestao/api/consolidated?accountIds=${selected.join(",")}`);
       const json = await res.json();
       if (json.success) setData(json.data);
     } finally {
