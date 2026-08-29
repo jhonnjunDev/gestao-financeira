@@ -34,7 +34,7 @@ export default function FaamSsoPage() {
       setStatus("Autenticando...");
 
       try {
-        const res = await fetch("/gestao/api/auth/faam-sso", {
+        const res = await fetch("/gestao/api/auth/faam-sso/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(sessao),
