@@ -1,6 +1,11 @@
-import { redirect } from "next/navigation";
+"use client";
+import { useEffect } from "react";
 
-// Com basePath /gestao, redirect("/login/") vira automaticamente /gestao/login/
+// Redireciona a raiz do sistema para a tela de login via JS.
+// Evita o loop/erro do redirect server-side com basePath + trailingSlash.
 export default function Home() {
-  redirect("/login/");
+  useEffect(() => {
+    window.location.replace("/gestao/login/");
+  }, []);
+  return null;
 }
