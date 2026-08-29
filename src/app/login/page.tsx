@@ -1,39 +1,61 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Building2, Eye, EyeOff } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@gestao.com.br");
-  const [password, setPassword] = useState("admin123");
+  const [status, setStatus] = useState("Verificando sessão do FAAM...");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPass, setShowPass] = useState(false);
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  useEffect(() => {
+    async function sso() {
+      const raw = localStorage.getItem("faam_sso");
+      if (!raw) {
+        setError("Nenhuma sessão do FAAM encontrada. Faça login no portal FAAM primeiro.");
+        return;
+      }
 
-    try {
-      const res = await fetch("/gestao/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Falha no login");
-      router.push("/dashboard");
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      let sessao;
+      try {
+        sessao = JSON.parse(raw);
+      } catch {
+        setError("Sessão inválida. Faça login novamente no FAAM.");
+        localStorage.removeItem("faam_sso");
+        return;
+      }
+
+      if (!sessao.perfil || (sessao.perfil !== "admin" && sessao.perfil !== "admin_master")) {
+        setError("Acesso restrito a administradores. Seu perfil não tem permissão.");
+        localStorage.removeItem("faam_sso");
+        return;
+      }
+
+      setStatus("Autenticando...");
+
+      try {
+        const res = await fetch("/gestao/api/auth/faam-sso", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sessao),
+        });
+        const json = await res.json();
+
+        if (!json.success) {
+          setError(json.error || "Erro ao autenticar");
+          return;
+        }
+
+        localStorage.removeItem("faam_sso");
+        setStatus("Redirecionando...");
+        router.push("/gestao/dashboard/");
+      } catch (e: any) {
+        setError("Erro de conexão: " + e.message);
+      }
     }
-  }
+
+    sso();
+  }, [router]);
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -49,7 +71,7 @@ export default function LoginPage() {
             <span className="text-brand-400">Profissional</span>
           </h1>
           <p className="text-gray-400 text-lg leading-relaxed">
-            Sistema completo para gerenciar múltiplas contas, controlar receitas e despesas, 
+            Sistema completo para gerenciar múltiplas contas, controlar receitas e despesas,
             emitir relatórios profissionais e realizar prestações de contas com excelência.
           </p>
           <div className="mt-8 grid grid-cols-2 gap-4">
@@ -63,66 +85,42 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Formulário de login */}
+      {/* Lado direito: SSO automático */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-3 mb-8">
+        <div className="w-full max-w-sm text-center">
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h1 className="font-bold text-gray-900">Gestão Financeira</h1>
-              <p className="text-xs text-gray-500">Sistema profissional</p>
-            </div>
+            <h1 className="font-bold text-gray-900">Gestão Financeira</h1>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Acessar sistema</h2>
-          <p className="text-sm text-gray-500 mb-8">Entre com suas credenciais para continuar</p>
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            <Input
-              label="E-mail"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              required
-            />
-
-            <div>
-              <label className="label">Senha</label>
-              <div className="relative">
-                <input
-                  type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pr-10"
-                  placeholder="Sua senha"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+          {!error && (
+            <>
+              <div className="mx-auto w-12 h-12 mb-6">
+                <div className="w-12 h-12 rounded-full border-4 border-brand-600 border-t-transparent animate-spin" />
               </div>
-            </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Entrando automaticamente</h2>
+              <p className="text-sm text-gray-500 mb-8">{status}</p>
+            </>
+          )}
 
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">
-                {error}
-              </div>
-            )}
+          {error && (
+            <>
+              <div className="text-5xl mb-4">🔒</div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Acesso restrito</h2>
+              <p className="text-sm text-gray-500 mb-6">{error}</p>
+              <a
+                href="https://faamhospitalar.dpdns.org/"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 transition-colors"
+              >
+                Voltar para o portal FAAM
+              </a>
+            </>
+          )}
 
-            <Button type="submit" className="w-full" loading={loading}>
-              Entrar
-            </Button>
-          </form>
-
-          <p className="mt-6 text-xs text-gray-400 text-center">
-            Demonstração: admin@gestao.com.br / admin123
+          <p className="mt-12 text-xs text-gray-400">
+            Desenvolvido por <span className="font-semibold text-gray-600">Jhonata</span>
           </p>
         </div>
       </div>
