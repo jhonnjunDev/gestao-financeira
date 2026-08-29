@@ -1,7 +1,7 @@
-import LoginPage from "./login/page";
+import { redirect } from "next/navigation";
 
-// A raiz do sistema (basePath /gestao) renderiza o login diretamente
-// para evitar loops de redirect com basePath + trailingSlash.
+// A raiz do sistema redireciona para a tela de login.
+// Caminho completo inclui o basePath /gestao para evitar loops de redirect.
 export default function Home() {
-  return <LoginPage />;
+  redirect("/gestao/login/");
 }
