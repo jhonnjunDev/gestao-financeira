@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// USUÁRIOS E PERMISSÕES
+// Role é armazenado como String para compatibilidade SQLite/PostgreSQL:
+// ADMIN | GESTOR | FINANCEIRO | CONSULTA | AUDITOR
+// ============================================================
+
+model User {
+  id            String        @id @default(cuid())
+  name          String
+  email         String        @unique
+  passwordHash  String
+  role          String        @default("FINANCEIRO")
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  accounts      UserAccount[]
+  transactions  Transaction[]
+  auditLogs     AuditLog[]
+  settings      Setting[]
+}
+
+model UserAccount {
+  id        String   @id @default(cuid())
+  userId    String
+  accountId String
+  role      String   @default("CONSULTA") // papel específico nesta conta
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+}
+
+// ============================================================
+// CONTAS
+// ============================================================
+
+model Account {
+  id                String          @id @default(cuid())
+  name              String
+  type              String          @default("Geral") // Geral, Bancária, Projeto, Loja, Empresa, Evento, Convênio...
+  color             String          @default("#2563eb")
+  icon              String          @default("🏢")
+  description       String?
+  responsible       String?
+  initialBalance    Decimal         @default(0)
+  archived          Boolean         @default(false)
+  active            Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  transactions      Transaction[]
+  categories        Category[]
+  costCenters       CostCenter[]
+  suppliers         Supplier[]
+  budgets           Budget[]
+  attachments       Attachment[]
+  userAccounts      UserAccount[]
+  auditLogs         AuditLog[]
+  settings          Setting[]
+  transfersFrom     Transfer[]      @relation("TransferFrom")
+  transfersTo       Transfer[]      @relation("TransferTo")
+
+  @@index([archived])
+  @@index([active])
+}
+
+// ============================================================
+// ESTRUTURA FINANCEIRA
+// ============================================================
+
+model Category {
+  id             String        @id @default(cuid())
+  accountId      String
+  name           String
+  type           String        // INCOME | EXPENSE
+  color          String        @default("#64748b")
+  parentId       String?       // subcategoria
+  parent         Category?     @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Category[]    @relation("CategoryTree")
+  transactions   Transaction[]
+  subOf          Transaction[] @relation("Sub")
+  budgets        Budget[]
+  account        Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, type])
+}
+
+model CostCenter {
+  id            String        @id @default(cuid())
+  accountId     String
+  name          String
+  color         String        @default("#64748b")
+  transactions  Transaction[]
+  budgets       Budget[]
+  account       Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+model Supplier {
+  id           String        @id @default(cuid())
+  accountId    String
+  name         String
+  document     String?       // CPF/CNPJ
+  phone        String?
+  email        String?
+  address      String?
+  bankData     String?
+  notes        String?
+  transactions Transaction[]
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+// ============================================================
+// LANÇAMENTOS E TRANSFERÊNCIAS
+// ============================================================
+
+model Transaction {
+  id             String       @id @default(cuid())
+  accountId      String
+  type           String       // INCOME | EXPENSE | TRANSFER
+  description    String
+  amount         Decimal
+  date           DateTime     @default(now())
+  dueDate        DateTime?
+  paymentDate    DateTime?
+  categoryId     String?
+  subcategoryId  String?
+  costCenterId   String?
+  supplierId     String?
+  paymentMethod  String?
+  documentNumber String?
+  notes          String?
+  status         String       @default("PAID") // PAID | RECEIVED | PENDING | LATE | CANCELED
+  recurring      Boolean      @default(false)
+  transferId     String?      // para lançamentos gerados por transferência
+  transfer       Transfer?    @relation(fields: [transferId], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  category       Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategory    Category?    @relation("Sub", fields: [subcategoryId], references: [id], onDelete: SetNull)
+  costCenter     CostCenter?  @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  supplier       Supplier?    @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  attachments    Attachment[]
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  deletedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([accountId, date])
+  @@index([accountId, type])
+  @@index([accountId, status])
+  @@index([deletedAt])
+}
+
+model Transfer {
+  id               String        @id @default(cuid())
+  fromAccountId    String
+  toAccountId      String
+  amount           Decimal
+  date             DateTime      @default(now())
+  description      String?
+  fromAccount      Account       @relation("TransferFrom", fields: [fromAccountId], references: [id])
+  toAccount        Account       @relation("TransferTo", fields: [toAccountId], references: [id])
+  transactions     Transaction[]
+  createdAt        DateTime      @default(now())
+}
+
+// ============================================================
+// ORÇAMENTO
+// ============================================================
+
+model Budget {
+  id            String       @id @default(cuid())
+  accountId     String
+  periodType    String       // MONTHLY | ANNUAL
+  year          Int
+  month         Int?         // 1-12 quando mensal
+  amount        Decimal
+  categoryId    String?
+  costCenterId  String?
+  account       Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category      Category?    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  costCenter    CostCenter?  @relation(fields: [costCenterId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, year, month])
+}
+
+// ============================================================
+// ANEXOS / DOCUMENTOS
+// ============================================================
+
+model Attachment {
+  id            String       @id @default(cuid())
+  accountId     String
+  transactionId String?
+  fileName      String
+  filePath      String
+  mimeType      String
+  size          Int          @default(0)
+  uploadedById  String?
+  createdAt     DateTime     @default(now())
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  account       Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+// ============================================================
+// AUDITORIA
+// ============================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  accountId  String?
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   // CREATE | UPDATE | DELETE | RESTORE | LOGIN | EXPORT...
+  entity     String   // TRANSACTION | ACCOUNT | CATEGORY | SUPPLIER | BUDGET...
+  entityId   String?
+  details    String?
+  oldValue   String?
+  newValue   String?
+  createdAt  DateTime @default(now())
+  account    Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([accountId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================
+// CONFIGURAÇÕES
+// ============================================================
+
+model Setting {
+  id        String   @id @default(cuid())
+  accountId String?
+  userId    String?
+  key       String
+  value     String
+  updatedAt DateTime @updatedAt
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, userId, key])
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  accountId  String?
+  userId     String?
+  type       String
+  title      String
+  data       String   // JSON
+  createdAt  DateTime @default(now())
+}
