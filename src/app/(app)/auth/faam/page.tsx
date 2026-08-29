@@ -49,7 +49,7 @@ export default function FaamSsoPage() {
         // Sucesso! Vai para o dashboard
         localStorage.removeItem("faam_sso");
         setStatus("Redirecionando...");
-        router.push("/gestao/dashboard/");
+        router.push("/dashboard/");
       } catch (e: any) {
         setError("Erro de conexão: " + e.message);
       }
